@@ -12,10 +12,10 @@ st.write("Aplica deformación espacial al texto para crear verdaderos patrones d
 # 1. Controles de la interfaz en una barra lateral para mayor comodidad
 st.sidebar.header("Ajustes de la Marca de Agua")
 watermark_text = st.sidebar.text_input("Texto", "USO EXCLUSIVO TRÁMITE 2026")
-tamano_letra = st.sidebar.slider("Tamaño de letra", 10, 100, 35)
+tamano_letra = st.sidebar.slider("Tamaño de letra", 10, 100, 10)
 
-separacion_lineas = st.sidebar.slider("Separación entre líneas", 0, 200, 60)
-separacion_texto = st.sidebar.slider("Separación horizontal del texto", 0, 200, 50)
+separacion_lineas = st.sidebar.slider("Separación entre líneas", 0, 200, 0)
+separacion_texto = st.sidebar.slider("Separación horizontal del texto", 0, 200, 0)
 
 st.sidebar.header("Ajustes de Deformación (Ondas)")
 angulo_rotacion = st.sidebar.slider("Ángulo de inclinación", -90, 90, 45)
@@ -37,6 +37,32 @@ if uploaded_file and watermark_text:
     # 2. Cargar imagen original
     original_img = Image.open(uploaded_file).convert("RGBA")
     width, height = original_img.size
+
+    # --- BLOQUE MALLA ANTI-OCR (SCANLINES) ---
+    original_cv = np.array(original_img)
+    
+    # Configuramos la malla
+    grosor_linea = 1
+    espaciado_malla = 4 # Una línea cada 4 píxeles. Si el DNI es muy grande, sube a 6 u 8.
+    
+    # Creamos un lienzo transparente para la malla
+    capa_malla = np.zeros_like(original_cv)
+    
+    # Dibujamos líneas horizontales oscuras
+    for y in range(0, height, espaciado_malla):
+        cv2.line(capa_malla, (0, y), (width, y), (30, 30, 30, 255), grosor_linea)
+        
+    # Añadimos algo de ruido de "Sal y Pimienta" solo a la malla para romper patrones perfectos
+    ruido_sal_pimienta = np.random.randint(0, 2, capa_malla.shape[:2]) * 255
+    mascara_ruido = ruido_sal_pimienta > 200
+    capa_malla[mascara_ruido] = [0, 0, 0, 255] # Píxeles negros aleatorios
+    
+    # Fusionamos la malla con el DNI original con una opacidad del 30%
+    opacidad_malla = 0.3
+    for c in range(3):
+        original_cv[:, :, c] = cv2.addWeighted(original_cv[:, :, c], 1.0, capa_malla[:, :, c], opacidad_malla, 0)
+    # --- FIN DEL BLOQUE MALLA ANTI-OCR (SCANLINES)---
+
 
     # 3. Calcular el tamaño de un lienzo GIGANTE seguro para la rotación
     # Usamos la hipotenusa para sacar la diagonal del documento y asegurarnos
