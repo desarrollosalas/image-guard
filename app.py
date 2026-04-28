@@ -93,10 +93,17 @@ if uploaded_file and watermark_text:
     draw = ImageDraw.Draw(txt_layer)
 
     # Cargar fuente principal escalada
+    # Para la marca de agua principal
     try:
-        font = ImageFont.truetype("arial.ttf", t_letra_real)
+        # Ahora buscamos el archivo que está en nuestra carpeta del proyecto
+        font = ImageFont.truetype("font.ttf", t_letra_real)
     except IOError:
-        font = ImageFont.load_default()
+        # Si falla, intentamos buscar una fuente estándar de Linux antes de rendirnos
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", t_letra_real)
+        except:
+            font = ImageFont.load_default()
+            st.warning("⚠️ No se encontró la fuente en el servidor. Usando fuente de sistema (pequeña).")
 
     # Calcular anchos y pasos
     try:
@@ -189,7 +196,7 @@ if uploaded_file and watermark_text:
 
     # --- BLOQUE BARRA INFERIOR LEGAL ---
     try:
-        font_footer = ImageFont.truetype("arial.ttf", t_letra_footer_real)
+        font_footer = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", t_letra_footer_real)
     except IOError:
         font_footer = ImageFont.load_default()
 
