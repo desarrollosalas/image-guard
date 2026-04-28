@@ -15,7 +15,7 @@ st.write("Aplica deformación espacial al texto, malla anti-OCR y ruido adversar
 # 1. CONTROLES DE LA INTERFAZ (BARRA LATERAL)
 # ==========================================
 st.sidebar.header("Ajustes de la Marca de Agua")
-watermark_text = st.sidebar.text_input("Texto", "USO EXCLUSIVO TRÁMITE 2026")
+watermark_text = st.sidebar.text_input("Texto", "USO EXCLUSIVO TRÁMITE")
 tamano_letra = st.sidebar.slider("Tamaño base de letra", 10, 100, 30)
 
 # Permitimos valores negativos para juntar mucho el patrón
@@ -194,11 +194,18 @@ if uploaded_file and watermark_text:
     final_image = Image.fromarray(resultado_cv)
     # --- FIN BLOQUE MARCA DE AGUA ---
 
-    # --- BLOQUE BARRA INFERIOR LEGAL ---
+    # --- BLOQUE BARRA INFERIOR LEGAL --
+
     try:
-        font_footer = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", t_letra_footer_real)
+        # Ahora buscamos el archivo que está en nuestra carpeta del proyecto
+        font_footer = ImageFont.truetype("font.ttf", t_letra_real)
     except IOError:
-        font_footer = ImageFont.load_default()
+        # Si falla, intentamos buscar una fuente estándar de Linux antes de rendirnos
+        try:
+            font_footer = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", t_letra_real)
+        except:
+            font_footer = ImageFont.load_default()
+            st.warning("⚠️ No se encontró la fuente en el servidor. Usando fuente de sistema (pequeña).")
 
     alto_barra = t_letra_footer_real + int(40 * escala)  
     ancho_final, alto_original = final_image.size
